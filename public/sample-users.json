@@ -1,5 +1,0 @@
-[
-  { "id": "u1", "name": "Alice Johnson", "email": "alice@example.com", "joined": "2023-05-12" },
-  { "id": "u2", "name": "Bob Smith", "email": "bob@example.com", "joined": "2024-01-02" },
-  { "id": "u3", "name": "Carmen Diaz", "email": "carmen@example.com", "joined": "2024-09-30" }
-]

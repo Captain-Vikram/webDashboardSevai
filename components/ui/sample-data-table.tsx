@@ -1,5 +1,5 @@
 "use client";
-
+import sampleData from "../data/sampleData.json";
 import { useState } from "react"
 import {
   Table,
@@ -9,54 +9,58 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+} from "./table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card"
+// Note: `jspdf` and `jspdf-autotable` are imported dynamically in `downloadPDF`
 
-const sampleData = [
-  { id: "1", name: "John Doe", email: "john@example.com", status: "Active", amount: "$250.00" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", status: "Active", amount: "$150.00" },
-  { id: "3", name: "Bob Johnson", email: "bob@example.com", status: "Pending", amount: "$350.00" },
-  { id: "4", name: "Alice Williams", email: "alice@example.com", status: "Active", amount: "$450.00" },
-  { id: "5", name: "Charlie Brown", email: "charlie@example.com", status: "Inactive", amount: "$550.00" },
-  { id: "6", name: "Diana Prince", email: "diana@example.com", status: "Active", amount: "$200.00" },
-  { id: "7", name: "Eve Adams", email: "eve@example.com", status: "Pending", amount: "$300.00" },
-]
+
 
 export function SampleDataTable() {
   const [showMenu, setShowMenu] = useState(false);
 
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text('User Transactions Report', 14, 22);
-    
-    // Add date
-    doc.setFontSize(11);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 32);
-    
-    // Create table
-    autoTable(doc, {
-      startY: 40,
-      head: [['ID', 'Name', 'Email', 'Status', 'Amount']],
-      body: sampleData.map(row => [
-        row.id,
-        row.name,
-        row.email,
-        row.status,
-        row.amount
-      ]),
-      theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246] },
-      styles: { fontSize: 10 },
-    });
-    
-    // Save the PDF
-    doc.save('transactions.pdf');
-    setShowMenu(false);
+  const downloadPDF = async () => {
+    try {
+      // Dynamically import to avoid build-time module resolution errors
+      // @ts-ignore - dynamic import to avoid build-time errors if package/types are not installed
+      const { jsPDF } = await import('jspdf');
+      // @ts-ignore - dynamic import to avoid build-time errors if package/types are not installed
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const doc = new jsPDF();
+
+      // Add title
+      doc.setFontSize(18);
+      doc.text('User Transactions Report', 14, 22);
+
+      // Add date
+      doc.setFontSize(11);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 32);
+
+      // Create table
+      autoTable(doc, {
+        startY: 40,
+        head: [['ID', 'Name', 'Email', 'Status', 'Amount']],
+        body: sampleData.map(row => [
+          row.id,
+          row.name,
+          row.email,
+          row.status,
+          row.amount
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 10 },
+      });
+
+      // Save the PDF
+      doc.save('transactions.pdf');
+    } catch (error) {
+      console.error('PDF generation failed. Ensure `jspdf` and `jspdf-autotable` are installed.', error);
+      // Fallback: alert user
+      alert('PDF export is unavailable (missing dependencies).');
+    } finally {
+      setShowMenu(false);
+    }
   };
 
   const downloadWord = () => {
