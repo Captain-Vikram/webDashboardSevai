@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { IncreaseSizePieChart, fallbackSegments, type DashboardData } from "./increase-size-pie-chart";
+import { IncreaseSizePieChart, type DashboardData } from "./increase-size-pie-chart";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatedCounter } from "./animated-counter";
-import { CreditDebitChart } from "./credit-debit-chart";
+import { CreditDebitChart, type CreditDebitData } from "./credit-debit-chart";
 import { OverviewCarousel, type InsightTip } from "./dashboard-overview-slider";
 
 type DataPeriod = "weekly" | "monthly" | "allTime";
@@ -145,6 +145,9 @@ const formatCategoryLabel = (value: string) =>
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 
+const hasContent = (value: unknown) =>
+  Array.isArray(value) ? value.length > 0 : Boolean(value && typeof value === "object" ? Object.keys(value).length : value);
+
 export function PieChartWithLegend() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [clickedIndex, setClickedIndex] = useState<number | null>(null);
@@ -152,9 +155,10 @@ export function PieChartWithLegend() {
   const [rawData, setRawData] = useState<DashboardResponse | null>(null);
   const [insightTips, setInsightTips] = useState<InsightTip[]>([]);
   const [currentStreak, setCurrentStreak] = useState<number>(0);
-  const [transactionActivity, setTransactionActivity] = useState<Array<{ date: string; count: number }>>([]);
+  const [transactionActivity, setTransactionActivity] = useState<CreditDebitData["transactionActivity"]>([]);
   const [dataPeriod, setDataPeriod] = useState<DataPeriod>("monthly");
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -169,36 +173,29 @@ export function PieChartWithLegend() {
     const loadDashboard = async () => {
       try {
         setIsLoading(true);
+        setErrorMsg(null);
 
-        // Try to get userId or viewId from URL query params or localStorage
         const params = new URLSearchParams(window.location.search);
-        const viewId = params.get("viewId");
-        const userIdFromUrl = params.get("userId");
-        const userIdFromStorage = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-        const userId = userIdFromUrl || userIdFromStorage;
+        const sheetId = params.get("sheetId");
 
-        let json: DashboardResponse;
+        if (!sheetId) {
+          throw new Error("Missing sheetId in URL. Please provide a valid link.");
+        }
 
-        // If viewId is provided, fetch from view API
-        if (viewId) {
-          const response = await fetch(`/api/view?id=${viewId}`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch view data");
-          }
-          json = await response.json();
+        const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+        if (!webhookUrl) {
+          throw new Error("The dashboard webhook is not configured.");
         }
-        // If userId is provided, fetch from API
-        else if (userId) {
-          const response = await fetch(`/api/dashboard?userId=${userId}`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch from API, falling back to JSON");
-          }
-          json = await response.json();
-        } else {
-          // Fallback to JSON file
-          const fileResponse = await fetch("/dashboard-data.json");
-          json = await fileResponse.json();
+
+        const response = await fetch(
+          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data. Please verify the sheetId.");
         }
+
+        const json: DashboardResponse = await response.json();
 
         if (isCancelled) return;
 
@@ -244,15 +241,19 @@ export function PieChartWithLegend() {
         const transactionActivityData = rawActivity.map((entry) => ({
           date: entry.date,
           count: entry.count ?? 0,
+          credit: entry.credit ?? 0,
+          debit: entry.debit ?? 0,
+          net: entry.net,
         }));
 
         setTransactionActivity(transactionActivityData);
 
         // Use streak from API response (calculated in dashboard-service)
         setCurrentStreak(json.account?.currentStreak ?? 0);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading dashboard data:", error);
         if (!isCancelled) {
+          setErrorMsg(error.message || "An unexpected error occurred while loading dashboard data.");
           setRawData(null);
           setDashboardData(null);
           setInsightTips([]);
@@ -465,9 +466,7 @@ export function PieChartWithLegend() {
   const formatCurrencyValue = (value: number) => currencyFormatter.format(Math.round(value));
 
   const categoryCards: CardType[] = (() => {
-    const sourceSegments = dashboardData?.segments?.length
-      ? dashboardData.segments
-      : fallbackSegments;
+    const sourceSegments = dashboardData?.segments ?? [];
 
     const sortedSegments = [...sourceSegments].sort((a, b) => b.amount - a.amount);
 
@@ -494,6 +493,12 @@ export function PieChartWithLegend() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {errorMsg && (
+        <Card className="p-4 bg-destructive/10 border-destructive mb-4">
+          <h3 className="font-semibold text-lg text-destructive mb-2">Error</h3>
+          <p className="text-sm text-destructive/90">{errorMsg}</p>
+        </Card>
+      )}
       {/* Overview carousel swaps between streak view and placeholder insight cards */}
       {(currentStreak > 0 || transactionActivity.length > 0 || insightTips.length > 0) && (
         <OverviewCarousel
@@ -504,7 +509,7 @@ export function PieChartWithLegend() {
       )}
 
       {/* Param Insights (conditionally rendered if data is present) */}
-      {rawData?.paramInsights && (
+      {hasContent(rawData?.paramInsights) && (
         <Card className="p-4 bg-muted/30 border border-border">
           <h3 className="font-semibold text-lg mb-2">Parameter Insights</h3>
           <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.paramInsights, null, 2)}</pre>
@@ -512,7 +517,7 @@ export function PieChartWithLegend() {
       )}
 
       {/* Wishlist Items (conditionally rendered if data is present) */}
-      {rawData?.wishlistItems && (
+      {hasContent(rawData?.wishlistItems) && (
         <Card className="p-4 bg-muted/30 border border-border">
           <h3 className="font-semibold text-lg mb-2">Wishlist Items</h3>
           <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.wishlistItems, null, 2)}</pre>
@@ -583,12 +588,19 @@ export function PieChartWithLegend() {
           <CreditDebitChart
             period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'}
             onPeriodChange={handlePeriodChange}
+            dashboardData={rawData ? {
+              currentStreak: currentStreak,
+              initialBalance: rawData.account?.balance?.initial ?? 0,
+              maxBalanceEverReached: rawData.account?.balance?.maxEverReached ?? 0,
+              currencyCode: rawData.metadata?.currency ?? 'INR',
+              transactionActivity,
+            } : null}
           />
         </motion.div>
       )}
 
       {/* Main Card with Swipe Support */}
-      {(isLoading || (dashboardData && dashboardData.segments && dashboardData.segments.length > 0)) && (
+      {(isLoading || Boolean(dashboardData?.segments?.length)) && (
         <motion.div
           ref={containerRef}
           onTouchStart={onTouchStart}
@@ -608,7 +620,7 @@ export function PieChartWithLegend() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+                  className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-70 scale-98' : 'opacity-100 scale-100'}`}
                 >
               {/* Pie Chart Section - Main Attraction */}
               <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">

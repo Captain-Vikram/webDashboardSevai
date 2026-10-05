@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { motion } from "motion/react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
@@ -27,39 +27,12 @@ type TransactionData = {
   net?: number;
 };
 
-type DashboardData = {
+export type CreditDebitData = {
   currentStreak: number;
   initialBalance: number;
   maxBalanceEverReached: number;
   currencyCode: string;
   transactionActivity: TransactionData[];
-};
-
-type RawActivityEntry = {
-  date?: string;
-  count?: number;
-  credit?: number;
-  debit?: number;
-  net?: number;
-};
-
-type DashboardResponse = {
-  metadata?: {
-    currency?: string;
-  };
-  account?: {
-    currentStreak?: number;
-    balance?: {
-      initial?: number;
-      current?: number;
-      maxEverReached?: number;
-    };
-  };
-  transactions?: {
-    trend?: {
-      daily?: RawActivityEntry[];
-    };
-  };
 };
 
 // Helper function to get day of week
@@ -213,10 +186,10 @@ const chartConfig = {
 interface CreditDebitChartProps {
   period: 'week' | 'month' | 'max';
   onPeriodChange?: (direction: 'prev' | 'next') => void;
+  dashboardData: CreditDebitData | null;
 }
 
-export function CreditDebitChart({ period, onPeriodChange }: CreditDebitChartProps) {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+export function CreditDebitChart({ period, onPeriodChange, dashboardData }: CreditDebitChartProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -270,47 +243,6 @@ export function CreditDebitChart({ period, onPeriodChange }: CreditDebitChartPro
     }
     return formatCurrency(value);
   };
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    const loadDashboard = async () => {
-      try {
-        const response = await fetch('/dashboard-data.json');
-        const json: DashboardResponse = await response.json();
-        if (isCancelled) return;
-
-        const activity = (json.transactions?.trend?.daily ?? []).filter(
-          (entry): entry is RawActivityEntry & { date: string } =>
-            typeof entry?.date === 'string'
-        );
-
-        const sanitizedActivity: TransactionData[] = activity.map((item) => ({
-          date: item.date,
-          count: item.count ?? 0,
-          credit: item.credit ?? 0,
-          debit: item.debit ?? 0,
-          net: item.net,
-        }));
-
-        setDashboardData({
-          currentStreak: json.account?.currentStreak ?? 0,
-          initialBalance: json.account?.balance?.initial ?? 0,
-          maxBalanceEverReached: json.account?.balance?.maxEverReached ?? 0,
-          currencyCode: json.metadata?.currency ?? 'INR',
-          transactionActivity: sanitizedActivity,
-        });
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);

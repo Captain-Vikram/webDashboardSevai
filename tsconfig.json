@@ -5,13 +5,12 @@
     // extending the root tsconfig (which sets rootDir:"src") doesn't make
     // the editor/typechecker treat these files as outside the program.
     "rootDir": ".",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "allowJs": true,
     "isolatedModules": true,
     "incremental": true,
     "noEmit": true,
     "types": [
-      "next",
       "node",
       "react"
     ],
@@ -33,7 +32,6 @@
     "resolveJsonModule": true
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
   ],

@@ -1,5 +1,4 @@
 "use client";
-import sampleData from "../data/sampleData.json";
 import { useState, useEffect } from "react"
 import {
   Table,
@@ -17,35 +16,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./car
 
 export function SampleDataTable() {
   const [showMenu, setShowMenu] = useState(false);
-  const [data, setData] = useState<any[]>(sampleData);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [shouldRender, setShouldRender] = useState(true);
 
   useEffect(() => {
     const fetchViewData = async () => {
       const params = new URLSearchParams(window.location.search);
-      const viewId = params.get("viewId");
-      if (viewId) {
-        try {
-          const res = await fetch(`/api/view?id=${viewId}`);
-          if (res.ok) {
-            const viewJson = await res.json();
-            if (viewJson.tableData) {
-              setData(viewJson.tableData);
-            } else {
-              setShouldRender(false); // Hide if tableData is missing in view
-            }
-          }
-        } catch (e) {
-          console.error("Failed to fetch table data", e);
+      const sheetId = params.get("sheetId");
+      if (!sheetId) {
+        setShouldRender(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+        if (!webhookUrl) {
+          throw new Error("The dashboard webhook is not configured.");
         }
+
+        const res = await fetch(
+          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`
+        );
+        if (res.ok) {
+          const viewJson = await res.json();
+          if (viewJson.tableData) {
+            setData(viewJson.tableData);
+          } else {
+            setShouldRender(false); // Hide if tableData is missing in view
+          }
+        } else {
+          setShouldRender(false);
+        }
+      } catch (e) {
+        console.error("Failed to fetch table data", e);
+        setShouldRender(false);
       }
       setLoading(false);
     };
     fetchViewData();
   }, []);
 
-  if (!shouldRender) return null;
+  if (loading || !shouldRender || data.length === 0) return null;
 
   const downloadPDF = async () => {
     try {

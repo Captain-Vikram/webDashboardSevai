@@ -32,14 +32,6 @@ export interface DashboardData {
     color?: string;
   }>;
 }
-export const fallbackSegments: DashboardData["segments"] = [
-  { id: "groceries", name: "Groceries", amount: 13200, percentage: 27.92, color: "hsl(var(--chart-1))" },
-  { id: "utilities", name: "Utilities", amount: 8400, percentage: 17.77, color: "hsl(var(--chart-2))" },
-  { id: "transport", name: "Transport", amount: 6200, percentage: 13.11, color: "hsl(var(--chart-3))" },
-  { id: "family_care", name: "Family Care", amount: 5600, percentage: 11.84, color: "hsl(var(--chart-4))" },
-  { id: "miscellaneous", name: "Miscellaneous", amount: 13900, percentage: 29.36, color: "hsl(var(--chart-5))" },
-];
-
 // Configure the size increase between each donut ring - largest gets biggest ring
 // Mobile sizes (for screens < 640px)
 const BASE_RADIUS_MOBILE = 70;
@@ -136,9 +128,7 @@ export function IncreaseSizePieChart({
   }, [currencyCode]);
 
   const segmentsFromJson = useMemo(() => {
-    const segments = dashboardData?.segments?.length
-      ? dashboardData.segments
-      : fallbackSegments;
+    const segments = dashboardData?.segments ?? [];
 
     return segments.map((segment, index) => {
       const paletteSize = resolvedColors.length || 5;

@@ -4,20 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
     "clsx": "^2.1.1",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.548.0",
     "motion": "^12.23.24",
-    "next": "^13.4.20",
-    "prisma": "^6.19.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.15.4",
@@ -27,16 +23,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",
+    "@vitejs/plugin-react": "^4.4.1",
     "@types/jspdf": "^1.3.3",
     "@types/node": "24.9.2",
     "@types/react": "^18.2.27",
     "@types/react-dom": "^18.2.7",
     "autoprefixer": "^10.4.21",
-    "eslint": "^8.49.0",
-    "eslint-config-next": "^14.1.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.16",
     "tweakcn": "^1.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
   }
 }
