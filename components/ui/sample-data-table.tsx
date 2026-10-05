@@ -1,6 +1,6 @@
 "use client";
 import sampleData from "../data/sampleData.json";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -17,6 +17,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./car
 
 export function SampleDataTable() {
   const [showMenu, setShowMenu] = useState(false);
+  const [data, setData] = useState<any[]>(sampleData);
+  const [loading, setLoading] = useState(true);
+  const [shouldRender, setShouldRender] = useState(true);
+
+  useEffect(() => {
+    const fetchViewData = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewId = params.get("viewId");
+      if (viewId) {
+        try {
+          const res = await fetch(`/api/view?id=${viewId}`);
+          if (res.ok) {
+            const viewJson = await res.json();
+            if (viewJson.tableData) {
+              setData(viewJson.tableData);
+            } else {
+              setShouldRender(false); // Hide if tableData is missing in view
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch table data", e);
+        }
+      }
+      setLoading(false);
+    };
+    fetchViewData();
+  }, []);
+
+  if (!shouldRender) return null;
 
   const downloadPDF = async () => {
     try {
@@ -40,7 +69,7 @@ export function SampleDataTable() {
       autoTable(doc, {
         startY: 40,
         head: [['ID', 'Name', 'Email', 'Status', 'Amount']],
-        body: sampleData.map(row => [
+        body: data.map(row => [
           row.id,
           row.name,
           row.email,
@@ -74,7 +103,7 @@ export function SampleDataTable() {
           <tr>
             <th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Amount</th>
           </tr>
-          ${sampleData.map(row => `
+          ${data.map(row => `
             <tr>
               <td>${row.id}</td>
               <td>${row.name}</td>
@@ -87,7 +116,7 @@ export function SampleDataTable() {
       </body>
       </html>
     `;
-    
+
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -117,7 +146,7 @@ export function SampleDataTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sampleData.map((row) => (
+            {data.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-medium">{row.id}</TableCell>
                 <TableCell>{row.name}</TableCell>
@@ -136,7 +165,7 @@ export function SampleDataTable() {
             ))}
           </TableBody>
         </Table>
-        
+
         {/* Download Button at Bottom Center */}
         <div className="flex justify-center mt-6">
           <div className="relative">

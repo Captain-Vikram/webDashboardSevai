@@ -124,6 +124,9 @@ type DashboardResponse = {
     counsel?: string;
     dateCreated?: string;
   }>;
+  paramInsights?: any;
+  wishlistItems?: any;
+  tableData?: any;
 };
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -166,17 +169,26 @@ export function PieChartWithLegend() {
     const loadDashboard = async () => {
       try {
         setIsLoading(true);
-        
-        // Try to get userId from URL query params or localStorage
+
+        // Try to get userId or viewId from URL query params or localStorage
         const params = new URLSearchParams(window.location.search);
+        const viewId = params.get("viewId");
         const userIdFromUrl = params.get("userId");
         const userIdFromStorage = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
         const userId = userIdFromUrl || userIdFromStorage;
 
         let json: DashboardResponse;
 
+        // If viewId is provided, fetch from view API
+        if (viewId) {
+          const response = await fetch(`/api/view?id=${viewId}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch view data");
+          }
+          json = await response.json();
+        }
         // If userId is provided, fetch from API
-        if (userId) {
+        else if (userId) {
           const response = await fetch(`/api/dashboard?userId=${userId}`);
           if (!response.ok) {
             throw new Error("Failed to fetch from API, falling back to JSON");
@@ -356,13 +368,13 @@ export function PieChartWithLegend() {
   const handlePeriodChange = (direction: 'prev' | 'next') => {
     const currentIndex = periodOrder.indexOf(dataPeriod);
     let newIndex;
-    
+
     if (direction === 'prev') {
       newIndex = currentIndex > 0 ? currentIndex - 1 : periodOrder.length - 1;
     } else {
       newIndex = currentIndex < periodOrder.length - 1 ? currentIndex + 1 : 0;
     }
-    
+
     setDataPeriod(periodOrder[newIndex]);
   };
 
@@ -377,7 +389,7 @@ export function PieChartWithLegend() {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -395,7 +407,7 @@ export function PieChartWithLegend() {
 
   const handleClick = (index: number) => {
     setClickedIndex(clickedIndex === index ? null : index);
-    
+
     // Auto-clear after 500ms (0.5 seconds) - consistent for both mobile and desktop
     if (clickedIndex !== index) {
       setTimeout(() => {
@@ -476,21 +488,39 @@ export function PieChartWithLegend() {
   const anyCardActive = categoryCards.some((card) => card.isActive);
 
   return (
-    <motion.div 
+    <motion.div
       className="w-full max-w-4xl mx-auto space-y-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Overview carousel swaps between streak view and placeholder insight cards */}
-      <OverviewCarousel
-        streakDays={currentStreak}
-        transactionActivity={transactionActivity}
-        tips={insightTips}
-      />
-      
+      {(currentStreak > 0 || transactionActivity.length > 0 || insightTips.length > 0) && (
+        <OverviewCarousel
+          streakDays={currentStreak}
+          transactionActivity={transactionActivity}
+          tips={insightTips}
+        />
+      )}
+
+      {/* Param Insights (conditionally rendered if data is present) */}
+      {rawData?.paramInsights && (
+        <Card className="p-4 bg-muted/30 border border-border">
+          <h3 className="font-semibold text-lg mb-2">Parameter Insights</h3>
+          <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.paramInsights, null, 2)}</pre>
+        </Card>
+      )}
+
+      {/* Wishlist Items (conditionally rendered if data is present) */}
+      {rawData?.wishlistItems && (
+        <Card className="p-4 bg-muted/30 border border-border">
+          <h3 className="font-semibold text-lg mb-2">Wishlist Items</h3>
+          <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.wishlistItems, null, 2)}</pre>
+        </Card>
+      )}
+
       {/* Period Indicator with Swipe Navigation */}
-      <motion.div 
+      <motion.div
         className="flex items-center justify-center gap-4"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -505,14 +535,14 @@ export function PieChartWithLegend() {
         >
           <ChevronLeft className="w-5 h-5" />
         </motion.button>
-        
+
         <div className="relative flex items-center gap-2">
           <div className="text-center min-w-[120px]">
             <p className="text-sm font-semibold transition-all duration-300">
               {periodLabels[dataPeriod]}
             </p>
           </div>
-          
+
           {/* Period Dots Indicator */}
           <div className="flex gap-1.5">
             {periodOrder.map((period) => (
@@ -520,8 +550,8 @@ export function PieChartWithLegend() {
                 key={period}
                 onClick={() => setDataPeriod(period)}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  period === dataPeriod 
-                    ? 'bg-primary w-6' 
+                  period === dataPeriod
+                    ? 'bg-primary w-6'
                     : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                 }`}
                 aria-label={`Switch to ${periodLabels[period]}`}
@@ -544,50 +574,53 @@ export function PieChartWithLegend() {
       </motion.div>
 
       {/* Credit/Debit Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.25 }}
-      >
-        <CreditDebitChart 
-          period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'} 
-          onPeriodChange={handlePeriodChange}
-        />
-      </motion.div>
+      {(isLoading || (transactionActivity && transactionActivity.length > 0)) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+        >
+          <CreditDebitChart
+            period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'}
+            onPeriodChange={handlePeriodChange}
+          />
+        </motion.div>
+      )}
 
       {/* Main Card with Swipe Support */}
-      <motion.div
-        ref={containerRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className="touch-pan-y"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <Card className="w-full overflow-hidden">
-          <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={dataPeriod}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-              >
-            {/* Pie Chart Section - Main Attraction */}
-            <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">
-              <IncreaseSizePieChart 
-                activeIndex={activeIndex}
-                clickedIndex={clickedIndex}
-                onHover={handleHover}
-                onClick={handleClick}
-                dashboardData={dashboardData}
-                isLoading={isLoading}
-              />
-            </div>
+      {(isLoading || (dashboardData && dashboardData.segments && dashboardData.segments.length > 0)) && (
+        <motion.div
+          ref={containerRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          className="touch-pan-y"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Card className="w-full overflow-hidden">
+            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={dataPeriod}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+                >
+              {/* Pie Chart Section - Main Attraction */}
+              <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">
+                <IncreaseSizePieChart
+                  activeIndex={activeIndex}
+                  clickedIndex={clickedIndex}
+                  onHover={handleHover}
+                  onClick={handleClick}
+                  dashboardData={dashboardData}
+                  isLoading={isLoading}
+                />
+              </div>
 
             {/* Category List Section - Compact */}
             <div className="flex-1 min-w-0">
@@ -598,7 +631,7 @@ export function PieChartWithLegend() {
                 <div className="space-y-1.5 sm:space-y-2 md:space-y-2.5">
                   {categoryCards.map((card, index) => {
                     const isActive = card.isActive;
-                    
+
                     return (
                       <motion.div
                         key={card.id}
@@ -666,6 +699,7 @@ export function PieChartWithLegend() {
         </CardContent>
       </Card>
       </motion.div>
+      )}
     </motion.div>
   );
 }
