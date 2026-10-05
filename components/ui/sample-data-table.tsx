@@ -116,7 +116,7 @@ export function SampleDataTable() {
       </body>
       </html>
     `;
-    
+
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -165,7 +165,7 @@ export function SampleDataTable() {
             ))}
           </TableBody>
         </Table>
-        
+
         {/* Download Button at Bottom Center */}
         <div className="flex justify-center mt-6">
           <div className="relative">

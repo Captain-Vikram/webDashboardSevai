@@ -20,7 +20,7 @@ export default async function handler(
 
   try {
     const filePath = path.join(process.cwd(), ".data", "views", `${id}.json`);
-    
+
     let fileContent;
     try {
       fileContent = await fs.readFile(filePath, "utf8");

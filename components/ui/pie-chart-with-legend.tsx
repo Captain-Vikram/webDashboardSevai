@@ -169,7 +169,7 @@ export function PieChartWithLegend() {
     const loadDashboard = async () => {
       try {
         setIsLoading(true);
-        
+
         // Try to get userId or viewId from URL query params or localStorage
         const params = new URLSearchParams(window.location.search);
         const viewId = params.get("viewId");
@@ -368,13 +368,13 @@ export function PieChartWithLegend() {
   const handlePeriodChange = (direction: 'prev' | 'next') => {
     const currentIndex = periodOrder.indexOf(dataPeriod);
     let newIndex;
-    
+
     if (direction === 'prev') {
       newIndex = currentIndex > 0 ? currentIndex - 1 : periodOrder.length - 1;
     } else {
       newIndex = currentIndex < periodOrder.length - 1 ? currentIndex + 1 : 0;
     }
-    
+
     setDataPeriod(periodOrder[newIndex]);
   };
 
@@ -389,7 +389,7 @@ export function PieChartWithLegend() {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -407,7 +407,7 @@ export function PieChartWithLegend() {
 
   const handleClick = (index: number) => {
     setClickedIndex(clickedIndex === index ? null : index);
-    
+
     // Auto-clear after 500ms (0.5 seconds) - consistent for both mobile and desktop
     if (clickedIndex !== index) {
       setTimeout(() => {
@@ -488,7 +488,7 @@ export function PieChartWithLegend() {
   const anyCardActive = categoryCards.some((card) => card.isActive);
 
   return (
-    <motion.div 
+    <motion.div
       className="w-full max-w-4xl mx-auto space-y-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -518,9 +518,9 @@ export function PieChartWithLegend() {
           <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.wishlistItems, null, 2)}</pre>
         </Card>
       )}
-      
+
       {/* Period Indicator with Swipe Navigation */}
-      <motion.div 
+      <motion.div
         className="flex items-center justify-center gap-4"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -535,14 +535,14 @@ export function PieChartWithLegend() {
         >
           <ChevronLeft className="w-5 h-5" />
         </motion.button>
-        
+
         <div className="relative flex items-center gap-2">
           <div className="text-center min-w-[120px]">
             <p className="text-sm font-semibold transition-all duration-300">
               {periodLabels[dataPeriod]}
             </p>
           </div>
-          
+
           {/* Period Dots Indicator */}
           <div className="flex gap-1.5">
             {periodOrder.map((period) => (
@@ -550,8 +550,8 @@ export function PieChartWithLegend() {
                 key={period}
                 onClick={() => setDataPeriod(period)}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  period === dataPeriod 
-                    ? 'bg-primary w-6' 
+                  period === dataPeriod
+                    ? 'bg-primary w-6'
                     : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                 }`}
                 aria-label={`Switch to ${periodLabels[period]}`}
@@ -580,8 +580,8 @@ export function PieChartWithLegend() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.25 }}
         >
-          <CreditDebitChart 
-            period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'} 
+          <CreditDebitChart
+            period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'}
             onPeriodChange={handlePeriodChange}
           />
         </motion.div>
@@ -612,7 +612,7 @@ export function PieChartWithLegend() {
                 >
               {/* Pie Chart Section - Main Attraction */}
               <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">
-                <IncreaseSizePieChart 
+                <IncreaseSizePieChart
                   activeIndex={activeIndex}
                   clickedIndex={clickedIndex}
                   onHover={handleHover}
@@ -631,7 +631,7 @@ export function PieChartWithLegend() {
                 <div className="space-y-1.5 sm:space-y-2 md:space-y-2.5">
                   {categoryCards.map((card, index) => {
                     const isActive = card.isActive;
-                    
+
                     return (
                       <motion.div
                         key={card.id}

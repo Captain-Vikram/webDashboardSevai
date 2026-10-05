@@ -14,16 +14,16 @@ export default async function handler(
 
   try {
     const data = req.body;
-    
+
     if (!data || typeof data !== 'object') {
       res.status(400).json({ error: "Invalid JSON body provided." });
       return;
     }
 
     const viewId = crypto.randomUUID();
-    
+
     const viewsDir = path.join(process.cwd(), ".data", "views");
-    
+
     // Ensure the directory exists
     try {
       await fs.access(viewsDir);
