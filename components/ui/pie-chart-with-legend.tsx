@@ -124,6 +124,9 @@ type DashboardResponse = {
     counsel?: string;
     dateCreated?: string;
   }>;
+  paramInsights?: any;
+  wishlistItems?: any;
+  tableData?: any;
 };
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -167,16 +170,25 @@ export function PieChartWithLegend() {
       try {
         setIsLoading(true);
         
-        // Try to get userId from URL query params or localStorage
+        // Try to get userId or viewId from URL query params or localStorage
         const params = new URLSearchParams(window.location.search);
+        const viewId = params.get("viewId");
         const userIdFromUrl = params.get("userId");
         const userIdFromStorage = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
         const userId = userIdFromUrl || userIdFromStorage;
 
         let json: DashboardResponse;
 
+        // If viewId is provided, fetch from view API
+        if (viewId) {
+          const response = await fetch(`/api/view?id=${viewId}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch view data");
+          }
+          json = await response.json();
+        }
         // If userId is provided, fetch from API
-        if (userId) {
+        else if (userId) {
           const response = await fetch(`/api/dashboard?userId=${userId}`);
           if (!response.ok) {
             throw new Error("Failed to fetch from API, falling back to JSON");
@@ -483,11 +495,29 @@ export function PieChartWithLegend() {
       transition={{ duration: 0.5 }}
     >
       {/* Overview carousel swaps between streak view and placeholder insight cards */}
-      <OverviewCarousel
-        streakDays={currentStreak}
-        transactionActivity={transactionActivity}
-        tips={insightTips}
-      />
+      {(currentStreak > 0 || transactionActivity.length > 0 || insightTips.length > 0) && (
+        <OverviewCarousel
+          streakDays={currentStreak}
+          transactionActivity={transactionActivity}
+          tips={insightTips}
+        />
+      )}
+
+      {/* Param Insights (conditionally rendered if data is present) */}
+      {rawData?.paramInsights && (
+        <Card className="p-4 bg-muted/30 border border-border">
+          <h3 className="font-semibold text-lg mb-2">Parameter Insights</h3>
+          <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.paramInsights, null, 2)}</pre>
+        </Card>
+      )}
+
+      {/* Wishlist Items (conditionally rendered if data is present) */}
+      {rawData?.wishlistItems && (
+        <Card className="p-4 bg-muted/30 border border-border">
+          <h3 className="font-semibold text-lg mb-2">Wishlist Items</h3>
+          <pre className="text-xs overflow-auto max-h-40">{JSON.stringify(rawData.wishlistItems, null, 2)}</pre>
+        </Card>
+      )}
       
       {/* Period Indicator with Swipe Navigation */}
       <motion.div 
@@ -544,50 +574,53 @@ export function PieChartWithLegend() {
       </motion.div>
 
       {/* Credit/Debit Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.25 }}
-      >
-        <CreditDebitChart 
-          period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'} 
-          onPeriodChange={handlePeriodChange}
-        />
-      </motion.div>
+      {(isLoading || (transactionActivity && transactionActivity.length > 0)) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+        >
+          <CreditDebitChart 
+            period={dataPeriod === 'weekly' ? 'week' : dataPeriod === 'monthly' ? 'month' : 'max'} 
+            onPeriodChange={handlePeriodChange}
+          />
+        </motion.div>
+      )}
 
       {/* Main Card with Swipe Support */}
-      <motion.div
-        ref={containerRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className="touch-pan-y"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <Card className="w-full overflow-hidden">
-          <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={dataPeriod}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-              >
-            {/* Pie Chart Section - Main Attraction */}
-            <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">
-              <IncreaseSizePieChart 
-                activeIndex={activeIndex}
-                clickedIndex={clickedIndex}
-                onHover={handleHover}
-                onClick={handleClick}
-                dashboardData={dashboardData}
-                isLoading={isLoading}
-              />
-            </div>
+      {(isLoading || (dashboardData && dashboardData.segments && dashboardData.segments.length > 0)) && (
+        <motion.div
+          ref={containerRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          className="touch-pan-y"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Card className="w-full overflow-hidden">
+            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={dataPeriod}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className={`flex flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-8 items-center transition-all duration-500 ease-out ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+                >
+              {/* Pie Chart Section - Main Attraction */}
+              <div className="shrink-0 w-[52%] sm:w-[60%] md:w-[420px] lg:w-[480px]">
+                <IncreaseSizePieChart 
+                  activeIndex={activeIndex}
+                  clickedIndex={clickedIndex}
+                  onHover={handleHover}
+                  onClick={handleClick}
+                  dashboardData={dashboardData}
+                  isLoading={isLoading}
+                />
+              </div>
 
             {/* Category List Section - Compact */}
             <div className="flex-1 min-w-0">
@@ -666,6 +699,7 @@ export function PieChartWithLegend() {
         </CardContent>
       </Card>
       </motion.div>
+      )}
     </motion.div>
   );
 }
