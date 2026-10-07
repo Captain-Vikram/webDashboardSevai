@@ -31,7 +31,12 @@ export default function App() {
     }
 
     fetch(
-      `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`
+      `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`,
+      {
+        headers: {
+          "ngrok-skip-browser-warning": "69420",
+        },
+      }
     )
       .then((response) => {
         if (!response.ok) {

@@ -188,7 +188,12 @@ export function PieChartWithLegend() {
         }
 
         const response = await fetch(
-          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`
+          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`,
+          {
+            headers: {
+              "ngrok-skip-browser-warning": "69420",
+            },
+          }
         );
 
         if (!response.ok) {

@@ -37,7 +37,12 @@ export function SampleDataTable() {
         }
 
         const res = await fetch(
-          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`
+          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`,
+          {
+            headers: {
+              "ngrok-skip-browser-warning": "69420",
+            },
+          }
         );
         if (res.ok) {
           const viewJson = await res.json();
