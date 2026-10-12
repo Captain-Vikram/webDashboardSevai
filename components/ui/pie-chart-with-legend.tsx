@@ -8,8 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatedCounter } from "./animated-counter";
 import { CreditDebitChart, type CreditDebitData } from "./credit-debit-chart";
 import { OverviewCarousel, type InsightTip } from "./dashboard-overview-slider";
-
-type DataPeriod = "weekly" | "monthly" | "allTime";
+import type { CategoryEntry, DashboardResponse, DataPeriod, TrendDailyEntry } from "@/lib/dashboard-types";
 
 type CardType = {
   id: string;
@@ -18,115 +17,6 @@ type CardType = {
   color: string;
   percentage?: number;
   isActive?: boolean;
-};
-
-type CategoryEntry = {
-  category?: string;
-  type?: string;
-  total?: number;
-  percentage?: number;
-  color?: string;
-};
-
-type TrendDailyEntry = {
-  date?: string;
-  count?: number;
-  credit?: number;
-  debit?: number;
-  net?: number;
-  balanceAfter?: number;
-  averageAccountBalance?: number;
-};
-
-type TransactionSummary = {
-  totalCount?: number;
-  totalCredit?: number;
-  totalDebit?: number;
-  netFlow?: number;
-  dateRange?: {
-    start?: string | null;
-    end?: string | null;
-  };
-};
-
-type CategoryPeriod = {
-  currency?: string;
-  totalDebit?: number;
-  label?: string;
-  data?: CategoryEntry[];
-};
-
-type HabitSnapshotTip = {
-  id?: string;
-  habitId?: string;
-  habitLabel?: string;
-  counsel?: string;
-  recordedAt?: string;
-  accent?: string;
-};
-
-type CoachAdviceEntry = {
-  id?: string;
-  summary?: string;
-  issuedAt?: string;
-  coach?: string;
-  priority?: string;
-};
-
-type LoginEvent = {
-  occurredAt?: string;
-  status?: "success" | "failed";
-  device?: string;
-  ipAddress?: string;
-};
-
-type DashboardResponse = {
-  metadata?: {
-    generatedAt?: string;
-    currency?: string;
-  };
-  authorization?: {
-    lastLogin?: string;
-    loginHistory?: LoginEvent[];
-  };
-  account?: {
-    currentStreak?: number;
-    balance?: {
-      initial?: number;
-      current?: number;
-      maxEverReached?: number;
-    };
-  };
-  transactions?: {
-    summary?: TransactionSummary;
-    categoryBreakdown?: {
-      periods?: Partial<Record<DataPeriod, CategoryPeriod>>;
-    };
-    trend?: {
-      daily?: TrendDailyEntry[];
-    };
-  };
-  insights?: {
-    habitTips?: HabitSnapshotTip[];
-    coachAdvice?: CoachAdviceEntry[];
-  };
-  // Support direct API response format
-  habitInsights?: Array<{
-    id?: number;
-    habitLabel?: string;
-    counsel?: string;
-    evidence?: string;
-    recordedAt?: string;
-  }>;
-  coachAdvice?: Array<{
-    id?: string;
-    headline?: string;
-    counsel?: string;
-    dateCreated?: string;
-  }>;
-  paramInsights?: any;
-  wishlistItems?: any;
-  tableData?: any;
 };
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -148,133 +38,87 @@ const formatCategoryLabel = (value: string) =>
 const hasContent = (value: unknown) =>
   Array.isArray(value) ? value.length > 0 : Boolean(value && typeof value === "object" ? Object.keys(value).length : value);
 
-export function PieChartWithLegend() {
+export function PieChartWithLegend({
+  data,
+  isLoading: requestLoading,
+  errorMsg,
+}: {
+  data: DashboardResponse | null;
+  isLoading: boolean;
+  errorMsg: string | null;
+}) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [clickedIndex, setClickedIndex] = useState<number | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [rawData, setRawData] = useState<DashboardResponse | null>(null);
   const [insightTips, setInsightTips] = useState<InsightTip[]>([]);
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [transactionActivity, setTransactionActivity] = useState<CreditDebitData["transactionActivity"]>([]);
   const [dataPeriod, setDataPeriod] = useState<DataPeriod>("monthly");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const rawData = data;
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isLoading = requestLoading || isProcessing;
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
-  // Load dashboard data from JSON file or API
   useEffect(() => {
-    let isCancelled = false;
+    if (!data) {
+      setDashboardData(null);
+      setIsProcessing(false);
+      setInsightTips([]);
+      setCurrentStreak(0);
+      setTransactionActivity([]);
+      return;
+    }
 
-    const loadDashboard = async () => {
-      try {
-        setIsLoading(true);
-        setErrorMsg(null);
+    const habitTipsSource = data.insights?.habitTips ?? data.habitInsights ?? [];
+    const coachAdviceSource = data.insights?.coachAdvice ?? data.coachAdvice ?? [];
 
-        const params = new URLSearchParams(window.location.search);
-        const sheetId = params.get("sheetId");
+    const habitTips = habitTipsSource.map((tip) => ({
+      id: tip.id ?? tip.habitId,
+      title: tip.habitLabel,
+      description: tip.counsel,
+      accent: tip.accent ?? "primary",
+      recordedAt: tip.recordedAt,
+    }));
 
-        if (!sheetId) {
-          throw new Error("Missing sheetId in URL. Please provide a valid link.");
-        }
+    const coachAdvice = coachAdviceSource.map((advice) => ({
+      id: advice.id,
+      title: advice.coach ? `${advice.coach}'s Advice` : "Coach Advice",
+      description: advice.summary ?? advice.counsel ?? advice.headline,
+      accent: "secondary",
+      recordedAt: advice.issuedAt ?? advice.dateCreated,
+    }));
 
-        const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
-        if (!webhookUrl) {
-          throw new Error("The dashboard webhook is not configured.");
-        }
+    const combinedTips = [...habitTips, ...coachAdvice]
+      .filter((tip) => Boolean(tip && (tip.title || tip.description)))
+      .sort((a, b) => {
+        const aTime = a.recordedAt ? new Date(a.recordedAt).getTime() : 0;
+        const bTime = b.recordedAt ? new Date(b.recordedAt).getTime() : 0;
+        return bTime - aTime;
+      })
+      .slice(0, 2)
+      .map(({ recordedAt, ...rest }) => rest);
 
-        const response = await fetch(
-          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`,
-          {
-            headers: {
-              "ngrok-skip-browser-warning": "69420",
-            },
-          }
-        );
+    setInsightTips(combinedTips);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data. Please verify the sheetId.");
-        }
+    const rawActivity = (data.transactions?.trend?.daily ?? []).filter(
+      (entry): entry is TrendDailyEntry & { date: string } =>
+        typeof entry?.date === "string"
+    );
 
-        const json: DashboardResponse = await response.json();
-
-        if (isCancelled) return;
-
-        setRawData(json);
-
-        // Handle both API response (habitInsights/coachAdvice) and synced JSON (insights.habitTips/insights.coachAdvice)
-        const habitTipsSource = json.insights?.habitTips ?? json.habitInsights ?? [];
-        const coachAdviceSource = json.insights?.coachAdvice ?? json.coachAdvice ?? [];
-
-        const habitTips = habitTipsSource.map((tip: any) => ({
-          id: tip.id ?? tip.habitId,
-          title: tip.habitLabel,
-          description: tip.counsel,
-          accent: tip.accent ?? "primary",
-          recordedAt: tip.recordedAt,
-        }));
-
-        const coachAdvice = coachAdviceSource.map((advice: any) => ({
-          id: advice.id,
-          title: advice.coach ? `${advice.coach}'s Advice` : "Coach Advice",
-          description: advice.summary ?? advice.counsel ?? advice.headline,
-          accent: "secondary",
-          recordedAt: advice.issuedAt ?? advice.dateCreated,
-        }));
-
-        const combinedTips = [...habitTips, ...coachAdvice]
-          .filter((tip) => Boolean(tip && (tip.title || tip.description)))
-          .sort((a, b) => {
-            const aTime = a.recordedAt ? new Date(a.recordedAt).getTime() : 0;
-            const bTime = b.recordedAt ? new Date(b.recordedAt).getTime() : 0;
-            return bTime - aTime;
-          })
-          .slice(0, 2)
-          .map(({ recordedAt, ...rest }) => rest);
-
-        setInsightTips(combinedTips);
-
-        const rawActivity = (json.transactions?.trend?.daily ?? []).filter(
-          (entry): entry is TrendDailyEntry & { date: string } =>
-            typeof entry?.date === "string"
-        );
-
-        const transactionActivityData = rawActivity.map((entry) => ({
-          date: entry.date,
-          count: entry.count ?? 0,
-          credit: entry.credit ?? 0,
-          debit: entry.debit ?? 0,
-          net: entry.net,
-        }));
-
-        setTransactionActivity(transactionActivityData);
-
-        // Use streak from API response (calculated in dashboard-service)
-        setCurrentStreak(json.account?.currentStreak ?? 0);
-      } catch (error: any) {
-        console.error("Error loading dashboard data:", error);
-        if (!isCancelled) {
-          setErrorMsg(error.message || "An unexpected error occurred while loading dashboard data.");
-          setRawData(null);
-          setDashboardData(null);
-          setInsightTips([]);
-          setCurrentStreak(0);
-          setTransactionActivity([]);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+    setTransactionActivity(rawActivity.map((entry) => ({
+      date: entry.date,
+      count: entry.count ?? 0,
+      credit: entry.credit ?? 0,
+      debit: entry.debit ?? 0,
+      net: entry.net,
+    })));
+    setCurrentStreak(data.account?.currentStreak ?? 0);
+  }, [data]);
 
   // Derive the active period dataset whenever the selection changes
   useEffect(() => {
@@ -289,11 +133,11 @@ export function PieChartWithLegend() {
       setDashboardData(null);
       setActiveIndex(null);
       setClickedIndex(null);
-      setIsLoading(false);
+      setIsProcessing(false);
       return;
     }
 
-    setIsLoading(true);
+    setIsProcessing(true);
 
     const normalised = preferredBreakdown.data
       .filter((item): item is CategoryEntry & { category: string } => Boolean(item && item.category))
@@ -357,7 +201,7 @@ export function PieChartWithLegend() {
     setActiveIndex(null);
     setClickedIndex(null);
 
-    const timeout = window.setTimeout(() => setIsLoading(false), 300);
+    const timeout = window.setTimeout(() => setIsProcessing(false), 300);
     return () => window.clearTimeout(timeout);
   }, [rawData, dataPeriod]);
 

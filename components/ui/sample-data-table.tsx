@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Table,
   TableBody,
@@ -10,60 +10,23 @@ import {
   TableRow,
 } from "./table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card"
+import type { DashboardResponse } from "@/lib/dashboard-types"
 // Note: `jspdf` and `jspdf-autotable` are imported dynamically in `downloadPDF`
 
 
 
-export function SampleDataTable() {
+type TableRowData = NonNullable<DashboardResponse["tableData"]>[number];
+
+export function SampleDataTable({
+  data,
+  isLoading,
+}: {
+  data: TableRowData[];
+  isLoading: boolean;
+}) {
   const [showMenu, setShowMenu] = useState(false);
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [shouldRender, setShouldRender] = useState(true);
 
-  useEffect(() => {
-    const fetchViewData = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const sheetId = params.get("sheetId");
-      if (!sheetId) {
-        setShouldRender(false);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
-        if (!webhookUrl) {
-          throw new Error("The dashboard webhook is not configured.");
-        }
-
-        const res = await fetch(
-          `${webhookUrl.replace(/\/$/, "")}/webhook/dashboard-data?sheetId=${encodeURIComponent(sheetId)}`,
-          {
-            headers: {
-              "ngrok-skip-browser-warning": "69420",
-            },
-          }
-        );
-        if (res.ok) {
-          const viewJson = await res.json();
-          if (viewJson.tableData) {
-            setData(viewJson.tableData);
-          } else {
-            setShouldRender(false); // Hide if tableData is missing in view
-          }
-        } else {
-          setShouldRender(false);
-        }
-      } catch (e) {
-        console.error("Failed to fetch table data", e);
-        setShouldRender(false);
-      }
-      setLoading(false);
-    };
-    fetchViewData();
-  }, []);
-
-  if (loading || !shouldRender || data.length === 0) return null;
+  if (isLoading || data.length === 0) return null;
 
   const downloadPDF = async () => {
     try {

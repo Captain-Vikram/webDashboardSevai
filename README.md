@@ -38,6 +38,9 @@ The app requires a `sheetId` query parameter and displays loading and error
 states while the webhook request is in progress. Dashboard sections with
 missing or empty data are hidden.
 
+The dashboard fetches the webhook response once per page load in `App.tsx` and
+passes that shared response to the charts, insights, and transactions table.
+
 ## GitHub Pages
 
 Pushes to `main` run `.github/workflows/deploy-pages.yml`. Before the first
