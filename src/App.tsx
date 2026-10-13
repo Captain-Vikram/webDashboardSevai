@@ -4,7 +4,7 @@ import { SampleDataTable } from "@/components/ui/sample-data-table";
 import { applyTheme, getThemeByStreak, type Theme } from "@/lib/theme-generator";
 import { fetchDashboardData } from "@/lib/dashboard-api";
 import type { DashboardResponse } from "@/lib/dashboard-types";
-import { demoDashboardData } from "@/lib/demo-dashboard-data";
+import { fetchDemoDashboardData } from "@/lib/demo-dashboard-data";
 
 export default function App() {
   const [currentTheme, setCurrentTheme] = useState<Theme | null>(null);
@@ -26,7 +26,7 @@ export default function App() {
 
     const loadDashboard = async () => {
       try {
-        const data = sheetId ? await fetchDashboardData(sheetId) : demoDashboardData;
+        const data = sheetId ? await fetchDashboardData(sheetId) : await fetchDemoDashboardData();
         setDashboardData(data);
         applyStreakTheme(data.account?.currentStreak ?? 0);
       } catch (error) {

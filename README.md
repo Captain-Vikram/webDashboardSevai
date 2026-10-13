@@ -18,7 +18,8 @@ Set `VITE_N8N_WEBHOOK_URL` in `.env.local`, then open:
 http://localhost:3000/?sheetId=YOUR_GOOGLE_SHEET_ID
 ```
 
-Opening the base URL without a `sheetId` shows the built-in sample dashboard.
+Opening the base URL without a `sheetId` loads the sample dashboard from
+`public/data.json`.
 Adding a `sheetId` switches to live data from n8n; live request failures are
 shown as errors and never fall back to sample data.
 

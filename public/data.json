@@ -1,0 +1,367 @@
+{
+  "metadata": {
+    "version": "1.1",
+    "generatedAt": "2025-11-08T07:45:23.033Z",
+    "currency": "INR",
+    "source": {
+      "database": "postgresql",
+      "schema": "public",
+      "tables": [
+        "users",
+        "tranasctions",
+        "habit_insights",
+        "coach_briefings"
+      ]
+    }
+  },
+  "authorization": {
+    "userId": 2,
+    "roleId": "member-01",
+    "roleName": "member",
+    "policies": [
+      {
+        "policyId": "policy-dashboard-read",
+        "collection": "directus_access",
+        "action": "read"
+      },
+      {
+        "policyId": "policy-transactions-read",
+        "collection": "tranasctions",
+        "action": "read"
+      }
+    ],
+    "lastLogin": "2025-11-08T07:45:23.033Z",
+    "loginHistory": []
+  },
+  "user": {
+    "id": 2,
+    "status": "active",
+    "dateCreated": "2025-11-04T17:38:15.954Z",
+    "dateUpdated": "2025-11-04T17:38:25.745Z",
+    "name": "Vighnesh",
+    "whatsappNumber": "919619183585",
+    "approxAge": 19,
+    "approxBankBalance": 500,
+    "smsAppApiKey": "redacted",
+    "tags": [
+      "active"
+    ],
+    "language": "en-IN",
+    "owner": {
+      "sourceTable": "users",
+      "id": 2
+    }
+  },
+  "account": {
+    "currentStreak": 250,
+    "balance": {
+      "opening": 500,
+      "current": 500,
+      "maxEverReached": 500,
+      "averageToDate": 500
+    }
+  },
+  "transactions": {
+    "summary": {
+      "totalCount": 7,
+      "totalCredit": 1330,
+      "totalDebit": 799.75,
+      "netFlow": 530.25,
+      "firstTransactionDate": "2025-10-13",
+      "lastTransactionDate": "2025-11-05",
+      "dateRange": {
+        "start": "2025-10-13",
+        "end": "2025-11-05"
+      }
+    },
+    "categoryBreakdown": {
+      "periods": {
+        "weekly": {
+          "currency": "INR",
+          "totalDebit": 799.75,
+          "label": "Last 7 Days",
+          "data": [
+            {
+              "category": "testing",
+              "type": "debit",
+              "total": 499.75,
+              "percentage": 62.48827758674585,
+              "color": "#3b82f6"
+            },
+            {
+              "category": "Side Hustle",
+              "type": "debit",
+              "total": 300,
+              "percentage": 37.51172241325414,
+              "color": "#ef4444"
+            }
+          ]
+        },
+        "monthly": {
+          "currency": "INR",
+          "totalDebit": 799.75,
+          "label": "Last 30 Days",
+          "data": [
+            {
+              "category": "testing",
+              "type": "debit",
+              "total": 499.75,
+              "percentage": 62.48827758674585,
+              "color": "#3b82f6"
+            },
+            {
+              "category": "Side Hustle",
+              "type": "debit",
+              "total": 300,
+              "percentage": 37.51172241325414,
+              "color": "#ef4444"
+            }
+          ]
+        },
+        "allTime": {
+          "currency": "INR",
+          "totalDebit": 799.75,
+          "label": "All Time",
+          "data": [
+            {
+              "category": "testing",
+              "type": "debit",
+              "total": 499.75,
+              "percentage": 62.48827758674585,
+              "color": "#3b82f6"
+            },
+            {
+              "category": "Side Hustle",
+              "type": "debit",
+              "total": 300,
+              "percentage": 37.51172241325414,
+              "color": "#ef4444"
+            }
+          ]
+        }
+      }
+    },
+    "trend": {
+      "daily": [
+        {
+          "date": "2025-10-13",
+          "count": 4,
+          "credit": 1000,
+          "debit": 0,
+          "net": 1000,
+          "balanceAfter": 1000,
+          "averageAccountBalance": 1000
+        },
+        {
+          "date": "2025-11-05",
+          "count": 3,
+          "credit": 330,
+          "debit": 799.75,
+          "net": -469.75,
+          "balanceAfter": 530.25,
+          "averageAccountBalance": 530.25
+        }
+      ],
+      "lastComputed": "2025-11-08T07:45:23.033Z"
+    },
+    "records": [
+      {
+        "id": "67266599-6682-4ffc-bdbe-b02f98c75468",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "debit",
+        "category": "testing",
+        "amount": 499.75,
+        "currency": "INR",
+        "medium": "manual",
+        "targetParty": "QA Store",
+        "description": "Manual test logging",
+        "comments": null,
+        "dateOfTransaction": "2025-11-05",
+        "dateCreated": "2025-11-05T04:46:25.328Z",
+        "dateUpdated": "2025-11-05T04:46:25.328Z",
+        "owner": 2,
+        "originalSmsId": "sms_67266599-6682-4ffc-bdbe-b02f98c75468",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "41579d37-8592-42b2-912a-a6e1a293c073",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "debit",
+        "category": "Side Hustle",
+        "amount": 300,
+        "currency": "INR",
+        "medium": null,
+        "targetParty": null,
+        "description": "Project help from friend",
+        "comments": null,
+        "dateOfTransaction": "2025-11-05",
+        "dateCreated": "2025-11-05T00:00:00.000Z",
+        "dateUpdated": "2025-11-05T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_41579d37-8592-42b2-912a-a6e1a293c073",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "0edd892c-caa0-4bc0-adfb-b20f1a3bdd22",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "credit",
+        "category": "Other Income",
+        "amount": 330,
+        "currency": "INR",
+        "medium": null,
+        "targetParty": null,
+        "description": "Pocket money from father",
+        "comments": null,
+        "dateOfTransaction": "2025-11-05",
+        "dateCreated": "2025-11-05T00:00:00.000Z",
+        "dateUpdated": "2025-11-05T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_0edd892c-caa0-4bc0-adfb-b20f1a3bdd22",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "ce43b3b4-dddc-452f-a7e3-d677e2c80b64",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "credit",
+        "category": "Other Income",
+        "amount": 250,
+        "currency": "INR",
+        "medium": "upi",
+        "targetParty": "UPI Transfer",
+        "description": "Credit via UPI with reference 991124333201.",
+        "comments": null,
+        "dateOfTransaction": "2025-10-13",
+        "dateCreated": "2025-10-13T00:00:00.000Z",
+        "dateUpdated": "2025-10-13T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_ce43b3b4-dddc-452f-a7e3-d677e2c80b64",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "562f7558-3619-4748-aabf-13a769691922",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "credit",
+        "category": "Other Income",
+        "amount": 250,
+        "currency": "INR",
+        "medium": "upi",
+        "targetParty": "Unknown Sender",
+        "description": "Credit via UPI with reference 991124333201.",
+        "comments": null,
+        "dateOfTransaction": "2025-10-13",
+        "dateCreated": "2025-10-13T00:00:00.000Z",
+        "dateUpdated": "2025-10-13T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_562f7558-3619-4748-aabf-13a769691922",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "aee29921-badd-43f2-82d9-a088bddcedde",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "credit",
+        "category": "Other Income",
+        "amount": 250,
+        "currency": "INR",
+        "medium": "upi",
+        "targetParty": "Unknown sender",
+        "description": "Credit via UPI with reference 991124333201.",
+        "comments": null,
+        "dateOfTransaction": "2025-10-13",
+        "dateCreated": "2025-10-13T00:00:00.000Z",
+        "dateUpdated": "2025-10-13T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_aee29921-badd-43f2-82d9-a088bddcedde",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      },
+      {
+        "id": "b23ee334-6b6c-47d2-8fe7-f74c91c441e8",
+        "sourceTable": "tranasctions",
+        "status": "active",
+        "type": "credit",
+        "category": "Other Income",
+        "amount": 250,
+        "currency": "INR",
+        "medium": "upi",
+        "targetParty": "Unknown",
+        "description": "UPI credit with reference 991124333201.",
+        "comments": null,
+        "dateOfTransaction": "2025-10-13",
+        "dateCreated": "2025-10-13T00:00:00.000Z",
+        "dateUpdated": "2025-10-13T00:00:00.000Z",
+        "owner": 2,
+        "originalSmsId": "sms_b23ee334-6b6c-47d2-8fe7-f74c91c441e8",
+        "linkedHabitIds": [],
+        "userCreated": 12,
+        "userUpdated": 12
+      }
+    ]
+  },
+  "logs": {
+    "lastSync": "2025-11-08T07:45:23.034Z",
+    "transactionLog": [
+      {
+        "date": "2025-11-05",
+        "count": 3,
+        "net": -469.75
+      },
+      {
+        "date": "2025-10-13",
+        "count": 4,
+        "net": 1000
+      }
+    ]
+  },
+  "insights": {
+    "habitTips": [],
+    "coachAdvice": []
+  },
+  "analytics": {
+    "browserUsage": {
+      "weekly": {
+        "period": {
+          "type": "days",
+          "value": 7,
+          "label": "Last 7 Days"
+        },
+        "total": 230,
+        "data": []
+      },
+      "monthly": {
+        "period": {
+          "type": "days",
+          "value": 30,
+          "label": "Last 30 Days"
+        },
+        "total": 835,
+        "data": []
+      },
+      "allTime": {
+        "period": {
+          "type": "all",
+          "value": null,
+          "label": "All Time"
+        },
+        "total": 3475,
+        "data": []
+      }
+    }
+  }
+}
