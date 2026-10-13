@@ -18,6 +18,10 @@ Set `VITE_N8N_WEBHOOK_URL` in `.env.local`, then open:
 http://localhost:3000/?sheetId=YOUR_GOOGLE_SHEET_ID
 ```
 
+Opening the base URL without a `sheetId` shows the built-in sample dashboard.
+Adding a `sheetId` switches to live data from n8n; live request failures are
+shown as errors and never fall back to sample data.
+
 The browser requests:
 
 ```text
@@ -34,9 +38,9 @@ npm run build
 ```
 
 The static build is written to `dist/` and does not require a Node.js server.
-The app requires a `sheetId` query parameter and displays loading and error
-states while the webhook request is in progress. Dashboard sections with
-missing or empty data are hidden.
+With a `sheetId`, the app displays loading and error states while the webhook
+request is in progress. Dashboard sections with missing or empty data are
+hidden.
 
 The dashboard fetches the webhook response once per page load in `App.tsx` and
 passes that shared response to the charts, insights, and transactions table.
