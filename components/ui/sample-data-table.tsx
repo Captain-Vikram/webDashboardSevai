@@ -49,7 +49,7 @@ export function SampleDataTable({
       // Create table
       autoTable(doc, {
         startY: 40,
-        head: [['ID', 'Name', 'Email', 'Status', 'Amount']],
+        head: [['ID', 'Vendor / Item', 'Category', 'Type', 'Amount']],
         body: data.map(row => [
           row.id,
           row.name,
@@ -82,7 +82,7 @@ export function SampleDataTable({
         <h1>User Transactions Report</h1>
         <table border="1" cellpadding="5" cellspacing="0">
           <tr>
-            <th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Amount</th>
+            <th>ID</th><th>Vendor / Item</th><th>Category</th><th>Type</th><th>Amount</th>
           </tr>
           ${data.map(row => `
             <tr>
@@ -111,32 +111,33 @@ export function SampleDataTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Transactions</CardTitle>
-        <CardDescription>A list of recent user transactions and their status</CardDescription>
+        <CardTitle>Recent Transactions</CardTitle>
+        <CardDescription>A list of your latest logged transactions from Google Sheets</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
-          <TableCaption>Recent transaction data</TableCaption>
+          <TableCaption>Latest recorded transactions</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-[90px]">ID</TableHead>
+              <TableHead>Vendor / Item</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((row) => (
               <TableRow key={row.id}>
-                <TableCell className="font-medium">{row.id}</TableCell>
-                <TableCell>{row.name}</TableCell>
+                <TableCell className="font-medium text-xs text-muted-foreground">{row.id}</TableCell>
+                <TableCell className="font-medium">{row.name}</TableCell>
                 <TableCell>{row.email}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    row.status === 'Active' ? 'bg-green-100 text-green-800' :
-                    row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                    row.status === 'Income' || row.status === 'Credit' || row.status === 'Active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                    row.status === 'Pending' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                    row.status === 'Expense' || row.status === 'Debit' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' :
+                    'bg-muted text-muted-foreground'
                   }`}>
                     {row.status}
                   </span>
